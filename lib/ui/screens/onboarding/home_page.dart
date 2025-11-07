@@ -62,7 +62,9 @@ class HomePage extends StatelessWidget {
                   minimumSize: Size(double.infinity, 50),
                 ),
                 child: Text('Sign In', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w300)),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/login');
+                },
               ),
             ],
           ),

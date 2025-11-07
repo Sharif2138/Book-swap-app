@@ -23,5 +23,3 @@ This repository contains the Flutter app code, architecture notes, and instructi
 - (Bonus) Chat between two users after a swap
 
 ---
-
-## Folder structure (recommended)

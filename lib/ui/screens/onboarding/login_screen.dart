@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:book_swap_app/ui/widgets/book_icon.dart';
-import 'signup_screen.dart';
+import 'package:book_swap_app/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,6 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _auth = AuthService();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -64,13 +65,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 214, 224, 31),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          214,
+                          224,
+                          31,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       onPressed: () {
+                        _auth.signIn(_emailController.text.trim(), _passwordController.text.trim());
                         if (_formKey.currentState!.validate()) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Logged in!')),
@@ -95,16 +102,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SignupScreen(),
-                            ),
-                          );
+                          Navigator.pushNamed(context, '/signup');
                         },
                         child: const Text(
                           'Sign Up',
-                          style: TextStyle(color: Color.fromARGB(255, 210, 231, 23)),
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 210, 231, 23),
+                          ),
                         ),
                       ),
                     ],

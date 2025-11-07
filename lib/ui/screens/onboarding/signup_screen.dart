@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:book_swap_app/ui/widgets/book_icon.dart';
-import 'login_screen.dart'; 
+import 'package:book_swap_app/services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -10,6 +10,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final _auth = AuthService();
   // Controllers to collect text
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -77,7 +78,12 @@ class _SignupScreenState extends State<SignupScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 173, 207, 19),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          173,
+                          207,
+                          19,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -85,7 +91,12 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          // Handle signup logic
+                          _auth.signUp(
+                            _nameController.text.trim(),
+                            _emailController.text.trim(),
+                            _passwordController.text.trim(),
+                          );
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Account Created!')),
                           );
@@ -109,16 +120,13 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
-                            ),
-                          );
+                          Navigator.pushNamed(context, '/login');
                         },
                         child: const Text(
                           'Login',
-                          style: TextStyle(color: Color.fromARGB(255, 181, 210, 15)),
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 181, 210, 15),
+                          ),
                         ),
                       ),
                     ],
