@@ -1,59 +1,101 @@
-// import 'package:flutter/material.dart';
-import '../../models/user_model.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AuthService {
+import '../models/user_model.dart';
+
+// AuthService must extend ChangeNotifier to work with Provider
+class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // 1. Sign Up
-  Future<UserModel?> signUp({
-    required String email,
-    required String password,
-    required String name,
-  }) async {
+  // Internal cache of the current user, updated by the stream listener
+  UserModel? _currentUser;
+
+  // --- Core State Stream for AuthWrapper ---
+
+  // Expose the core Firebase User stream
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  // Method to get the full UserModel (from Auth and Firestore)
+  // Used by AuthWrapper or any screen that needs user profile data.
+  Future<UserModel?> getCurrentUserModel(User? firebaseUser) async {
+    if (firebaseUser == null) {
+      _currentUser = null;
+      notifyListeners();
+      return null;
+    }
+
+    // 1. Convert Firebase User to initial UserModel
+    UserModel userModel = UserModel.fromFirebaseUser(firebaseUser);
+
+    // 2. Fetch additional data from Firestore
     try {
-      // 1. Create user in Firebase Auth
+      final doc = await _db.collection('users').doc(firebaseUser.uid).get();
+      if (doc.exists) {
+        // Merge data from Firestore (name, imageUrl) and Auth (id, email, isEmailVerified)
+        userModel = UserModel.fromFirestore(
+          doc.data()!,
+          firebaseUser.uid,
+        ).copyWith(isEmailVerified: firebaseUser.emailVerified);
+      } else {
+        // If Firestore document doesn't exist (e.g., failed to write on signup),
+        // create a new entry with basic auth data and the isEmailVerified status.
+        await _db
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .set(userModel.toCreationFirestore());
+      }
+    } catch (e) {
+      debugPrint('Error fetching user data from Firestore: $e');
+      // Continue with the minimal UserModel from Firebase Auth on failure
+    }
+
+    _currentUser = userModel;
+    // We don't call notifyListeners here; the StreamProvider in main.dart handles updates.
+    return userModel;
+  }
+
+  // Public getter for the latest cached user model
+  UserModel? get currentUser => _currentUser;
+
+  // --- Sign Up ---
+  Future<UserModel?> signUp(String name, String email, String password) async {
+    try {
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      final firebaseUser = userCredential.user;
+      final firebaseUser = userCredential.user!;
 
-      if (firebaseUser != null) {
-        // 2. Send email verification
-        await firebaseUser.sendEmailVerification();
+      // Update display name immediately (optional but good practice)
+      await firebaseUser.updateDisplayName(name);
 
-        // 3. Create initial profile data
-        final newUser = UserModel(
-          id: firebaseUser.uid,
-          email: email,
-          name: name,
-          isEmailVerified: false, // Starts as false
-        );
+      // Create initial UserModel with verification status (which will be false)
+      UserModel newUser = UserModel.fromFirebaseUser(
+        firebaseUser,
+      ).copyWith(name: name);
 
-        // 4. Save profile to Firestore
-        await _db
-            .collection('users')
-            .doc(firebaseUser.uid)
-            .set(newUser.toMap());
+      // 1. Save user profile to Firestore
+      await _db
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .set(newUser.toCreationFirestore());
 
-        return newUser;
-      }
-      return null;
-    } on FirebaseAuthException {
-      // Handle Firebase errors (e.g., email already in use, weak password)
-      rethrow;
+      // 2. Send email verification (Critical requirement)
+      await sendEmailVerification(firebaseUser);
+
+      // We don't set _currentUser here; the authStateChanges stream handles this.
+      return newUser;
+    } on FirebaseAuthException catch (e) {
+      // Throw the message for the UI to display
+      throw e.message ?? 'Signup failed';
     }
   }
 
-  // 2. Sign In
-  Future<UserModel?> signIn({
-    required String email,
-    required String password,
-  }) async {
+  // --- Sign In ---
+  Future<UserModel?> signIn(String email, String password) async {
     try {
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -63,52 +105,53 @@ class AuthService {
       final firebaseUser = userCredential.user;
 
       if (firebaseUser != null) {
-        // Fetch the user's full profile from Firestore
-        final doc = await _db.collection('users').doc(firebaseUser.uid).get();
-        if (doc.exists) {
-          // Check verification status from the live Firebase User object
-          await firebaseUser.reload(); // Ensure we have the latest status
-          final isVerified = _auth.currentUser?.emailVerified ?? false;
-
-          // Return the AppUser model combined with the latest verification status
-          final userData = doc.data()!;
-          return UserModel.fromMap({
-            ...userData,
-            'isEmailVerified': isVerified, // Overwrite with live status
-          });
-        }
+        // Fetches and updates the internal cache
+        return await getCurrentUserModel(firebaseUser);
       }
       return null;
-    } on FirebaseAuthException {
-      rethrow;
+    } on FirebaseAuthException catch (e) {
+      throw e.message ?? 'Sign-in failed';
     }
   }
 
-  // 3. Sign Out
+  // --- Sign Out ---
   Future<void> signOut() async {
     await _auth.signOut();
+    _currentUser = null;
+    notifyListeners(); // Notify listeners that the user state has changed to null
   }
 
-  // 4. Real-time Authentication State Stream (Crucial for Provider)
-  Stream<UserModel?> get userChanges {
-    // This stream listens to Firebase's auth state (logged in/out)
-    return _auth.authStateChanges().asyncMap((user) async {
-      if (user == null) {
-        return null; // User is logged out
-      } else {
-        // User is logged in, fetch their profile and latest verification status
-        final doc = await _db.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          await user.reload();
-          final isVerified = _auth.currentUser?.emailVerified ?? false;
-          final userData = doc.data()!;
-          return UserModel.fromMap({
-            ...userData,
-            'isEmailVerified': isVerified,
-          });
-        }
-        return null;
+  // --- Email Verification and Password Reset Methods ---
+
+  // Send Email Verification (Public method for UI)
+  Future<void> sendEmailVerification([User? user]) async {
+    final targetUser = user ?? _auth.currentUser;
+    if (targetUser != null) {
+      try {
+        await targetUser.sendEmailVerification();
+      } on FirebaseAuthException catch (e) {
+        throw e.message ?? 'Failed to send verification email.';
       }
-    });
+    }
+  }
+
+  // Reload User Status (for checking if verification succeeded)
+  Future<void> reloadUser() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.reload();
+      // Force an update to the user model and notify listeners
+      await getCurrentUserModel(_auth.currentUser);
+      notifyListeners();
+    }
+  }
+
+  // Password Reset (Public method for UI)
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw e.message ?? 'Failed to send password reset email.';
+    }
   }
 }

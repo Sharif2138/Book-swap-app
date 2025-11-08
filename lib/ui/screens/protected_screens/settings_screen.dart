@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,6 +13,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Local state for settings options
   bool isDarkMode = false;
   bool notificationsEnabled = true;
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -130,16 +133,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             onPressed: () {
-              Navigator.pushNamed(context, '/');
-              // TODO: Add actual logout logic later
-              // ScaffoldMessenger.of(context).showSnackBar(
-              //   SnackBar(
-              //     content: Text(
-              //       'Logged out: isDarkMode=$isDarkMode, notificationsEnabled=$notificationsEnabled',
-              //     ),
-              //     duration: const Duration(seconds: 2),
-              //   ),
-              // );
+              final authActions = context.read<AuthProvider>();
+              authActions.signOut();
+              
             },
           ),
         ],
