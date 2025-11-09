@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show File;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -115,6 +116,7 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
           condition: condition,
           imageBase64: _imageBase64,
           ownerId: auth.user!.uid,
+          createdAt: Timestamp.now(),
         );
         await bookProv.addBook(newBook);
       } else {
@@ -126,6 +128,7 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
           imageBase64: _imageBase64,
           ownerId: widget.book!.ownerId,
           swapState: widget.book!.swapState,
+          createdAt: widget.book!.createdAt,
         );
         await bookProv.updateBook(updated);
       }
@@ -186,7 +189,7 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: condition,
+                      initialValue: condition,
                       decoration: InputDecoration(
                         labelText: 'Condition',
                         border: OutlineInputBorder(

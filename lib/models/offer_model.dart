@@ -29,6 +29,8 @@ class Offer {
     );
   }
 
+  get fromUserName => null;
+
   Map<String, dynamic> toMap() => {
     'bookId': bookId,
     'fromUserId': fromUserId,

@@ -6,7 +6,8 @@ class FirestoreService {
   final booksCol = FirebaseFirestore.instance.collection('books');
   final offersCol = FirebaseFirestore.instance.collection('offers');
 
-  // Books
+  // 🔹 BOOKS
+
   Stream<List<Book>> booksStream() {
     return booksCol
         .orderBy('title')
@@ -15,17 +16,20 @@ class FirestoreService {
   }
 
   Future<void> addBook(Book b) => booksCol.add(b.toMap());
+
   Future<void> updateBook(Book b) => booksCol.doc(b.id).update(b.toMap());
+
   Future<void> deleteBook(String id) => booksCol.doc(id).delete();
 
-  // Offers
+  Future<void> setBookSwapState(String bookId, String swapState) =>
+      booksCol.doc(bookId).update({'swapState': swapState});
+
+  // 🔹 OFFERS
+
   Stream<List<Offer>> offersForUser(String uid) {
     // offers where fromUserId==uid OR toUserId==uid
     return offersCol
-        .where(
-          'participants',
-          arrayContains: uid,
-        ) // we'll store participants to ease queries
+        .where('participants', arrayContains: uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((s) => s.docs.map((d) => Offer.fromFirestore(d)).toList());
@@ -52,7 +56,17 @@ class FirestoreService {
   Future<void> updateOfferStatus(String offerId, String status) =>
       offersCol.doc(offerId).update({'status': status});
 
-  // Update corresponding book swapState when offer status changes
-  Future<void> setBookSwapState(String bookId, String swapState) =>
-      booksCol.doc(bookId).update({'swapState': swapState});
+  /// ✅ NEW: Prevent duplicate pending offers for the same user/book
+  Future<List<Offer>> getPendingOffersForBookByUser(
+    String bookId,
+    String fromUserId,
+  ) async {
+    final query = await offersCol
+        .where('bookId', isEqualTo: bookId)
+        .where('fromUserId', isEqualTo: fromUserId)
+        .where('status', isEqualTo: 'Pending')
+        .get();
+
+    return query.docs.map((d) => Offer.fromFirestore(d)).toList();
+  }
 }

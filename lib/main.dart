@@ -16,10 +16,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Reference default bucket
-  // FirebaseStorage storage = FirebaseStorage.instanceFor(
-  //   bucket: DefaultFirebaseOptions.currentPlatform.storageBucket,
-  // );
+  
 
   runApp(const AppEntry());
 }

@@ -10,6 +10,7 @@ class Book {
   final String? imageBase64; // Base64 image stored in Firestore
   final String ownerId;
   final String swapState; // Available, Pending, Accepted, Rejected
+  final Timestamp? createdAt;
 
   Book({
     required this.id,
@@ -19,6 +20,7 @@ class Book {
     this.imageBase64,
     required this.ownerId,
     this.swapState = 'Available',
+    this.createdAt,
   });
 
   factory Book.fromFirestore(DocumentSnapshot doc) {
@@ -31,6 +33,7 @@ class Book {
       imageBase64: data['imageBase64'],
       ownerId: data['ownerId'] ?? '',
       swapState: data['swapState'] ?? 'Available',
+      createdAt: data['createdAt'] as Timestamp?,
     );
   }
 
@@ -41,7 +44,7 @@ class Book {
     if (imageBase64 != null) 'imageBase64': imageBase64,
     'ownerId': ownerId,
     'swapState': swapState,
-    'createdAt': FieldValue.serverTimestamp(),
+    'createdAt': createdAt ?? FieldValue.serverTimestamp(),
   };
 
   /// Helper to get image as Uint8List for Image.memory

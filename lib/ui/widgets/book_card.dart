@@ -18,7 +18,7 @@ class BookCard extends StatelessWidget {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final bp = Provider.of<BookProvider>(context, listen: false);
 
-    Widget _imageWidget() {
+    Widget imageWidget() {
       if (book.imageBase64 != null && book.imageBase64!.isNotEmpty) {
         final bytes = base64Decode(book.imageBase64!);
         return Image.memory(bytes, width: 56, height: 56, fit: BoxFit.cover);
@@ -29,7 +29,7 @@ class BookCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: ListTile(
-        leading: _imageWidget(),
+        leading: imageWidget(),
         title: Text(book.title),
         subtitle: Text(
           '${book.author} · ${book.condition}\nState: ${book.swapState}',
@@ -58,7 +58,7 @@ class BookCard extends StatelessWidget {
             ? ElevatedButton(
                 onPressed: () async {
                   final fromUid = auth.user!.uid;
-                  await bp.requestSwap(book.id, fromUid, book.ownerId);
+                  await bp.requestSwap(bookId: book.id, fromUserId: fromUid, toUserId: book.ownerId);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Swap requested')),
                   );

@@ -1,10 +1,10 @@
 import 'dart:convert';
-// import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/book_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/offer_provider.dart';
+import '../../models/book_model.dart';
 import 'add_edit_book_screen.dart';
 
 class BrowseListingsScreen extends StatelessWidget {
@@ -14,16 +14,18 @@ class BrowseListingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final bookProv = Provider.of<BookProvider>(context);
     final authProv = Provider.of<AuthProvider>(context);
+    final offerProv = Provider.of<OfferProvider>(context);
+
     final books = bookProv.books;
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 243, 244, 246),
       appBar: AppBar(
-        toolbarHeight: 90.0,
+        toolbarHeight: 90,
         backgroundColor: const Color.fromARGB(255, 1, 6, 37),
         title: const Text(
           'Browse Listings',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontSize: 22),
         ),
         centerTitle: true,
       ),
@@ -33,29 +35,63 @@ class BrowseListingsScreen extends StatelessWidget {
                 color: Color.fromARGB(255, 214, 224, 31),
               ),
             )
+          : books.isEmpty
+          ? const Center(
+              child: Text(
+                'No books available yet.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
           : RefreshIndicator(
               color: const Color.fromARGB(255, 214, 224, 31),
-              onRefresh: () async {},
-              child: ListView.builder(
+              onRefresh: () async {
+                // Force UI to refresh
+                bookProv.isLoading = true;
+                await Future.delayed(const Duration(seconds: 1));
+                bookProv.isLoading = false;
+              },
+              child: ListView.separated(
                 itemCount: books.length,
                 padding: const EdgeInsets.symmetric(
-                  vertical: 8,
+                  vertical: 10,
                   horizontal: 16,
                 ),
+                separatorBuilder: (ctx, i) => const Divider(
+                  color: Colors.grey,
+                  thickness: 0.4,
+                  height: 25,
+                ),
                 itemBuilder: (ctx, i) {
-                  final b = books[i];
-                  final isOwner =
-                      authProv.user != null && b.ownerId == authProv.user!.uid;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: BookListingTile(
-                      title: b.title,
-                      author: b.author,
-                      condition: b.condition,
-                      daysAgo: '',
-                      isOwner: isOwner,
-                      imageBase64: b.imageBase64,
-                    ),
+                  final book = books[i];
+                  final isOwner = authProv.user?.uid == book.ownerId;
+
+                  // Check if this user has already requested this book
+                  final hasPendingOffer = offerProv.offers.any(
+                    (o) =>
+                        o.bookId == book.id &&
+                        o.fromUserId == authProv.user?.uid &&
+                        o.status == 'Pending',
+                  );
+
+                  return BookListingTile(
+                    book: book,
+                    isOwner: isOwner,
+                    onSwap: (!isOwner && !hasPendingOffer)
+                        ? () async {
+                            if (authProv.user == null) return;
+                            await bookProv.requestSwap(
+                              bookId: book.id,
+                              fromUserId: authProv.user!.uid,
+                              toUserId: book.ownerId,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Swap request sent!'),
+                              ),
+                            );
+                          }
+                        : null,
+                    swapButtonDisabled: hasPendingOffer,
                   );
                 },
               ),
@@ -70,59 +106,46 @@ class BrowseListingsScreen extends StatelessWidget {
         backgroundColor: const Color.fromARGB(255, 193, 202, 17),
         foregroundColor: Colors.black,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
 
 class BookListingTile extends StatelessWidget {
-  final String title;
-  final String author;
-  final String condition;
-  final String daysAgo;
+  final Book book;
   final bool isOwner;
-  final String? imageBase64; // added
+  final VoidCallback? onSwap;
+  final bool swapButtonDisabled;
 
   const BookListingTile({
     super.key,
-    required this.title,
-    required this.author,
-    required this.condition,
-    required this.daysAgo,
+    required this.book,
     this.isOwner = false,
-    this.imageBase64,
+    this.onSwap,
+    this.swapButtonDisabled = false,
   });
 
   Widget _buildBookImage() {
-    if (imageBase64 != null && imageBase64!.isNotEmpty) {
+    if (book.imageBase64 != null && book.imageBase64!.isNotEmpty) {
       try {
-        final bytes = base64Decode(imageBase64!);
-        return Image.memory(bytes, width: 120, height: 160, fit: BoxFit.cover);
+        final bytes = base64Decode(book.imageBase64!);
+        return Image.memory(bytes, width: 100, height: 140, fit: BoxFit.cover);
       } catch (_) {}
     }
-    // fallback
     return Container(
-      width: 80,
-      height: 120,
-      decoration: BoxDecoration(
-        color: Colors.blueGrey,
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(2, 2)),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          title.split(' ')[0],
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color.fromARGB(253, 5, 0, 0),
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-      ),
+      width: 100,
+      height: 140,
+      color: Colors.blueGrey,
+      child: const Icon(Icons.menu_book, color: Colors.white, size: 40),
     );
+  }
+
+  String timeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
@@ -131,58 +154,86 @@ class BookListingTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildBookImage(),
-        
-        const SizedBox(width: 25),
+        const SizedBox(width: 15),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 12, 11, 11),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                author,
-                style: TextStyle(fontSize: 14, color: const Color.fromARGB(179, 8, 8, 8)),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                condition,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: condition == 'Like New'
-                      ? Colors.greenAccent
-                      : Colors.grey[300],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.folder_open,
-                    size: 16,
-                    color: Colors.white70,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  book.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
                   ),
-                  const SizedBox(width: 5),
-                  Text(
-                    daysAgo,
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  book.author,
+                  style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
                   ),
-                  if (isOwner)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 10),
-                      child: Icon(Icons.person, size: 16, color: Colors.yellow),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple[50],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    book.condition,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.deepPurple[700],
                     ),
-                ],
-              ),
-              
-            ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  book.createdAt != null
+                      ? timeAgo(book.createdAt!.toDate())
+                      : 'Unknown date',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                if (!isOwner)
+                  SizedBox(
+                    height: 38,
+                    child: ElevatedButton(
+                      onPressed: swapButtonDisabled ? null : onSwap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: swapButtonDisabled
+                            ? Colors.grey.shade400
+                            : Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      child: Text(
+                        swapButtonDisabled ? 'Requested' : 'Swap',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const Text(
+                    'Your Listing',
+                    style: TextStyle(
+                      color: Colors.blueGrey,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ],
