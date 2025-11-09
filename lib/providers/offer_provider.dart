@@ -24,7 +24,7 @@ class OfferProvider extends ChangeNotifier {
     // Update book's swapState to Accepted
     await _fs.setBookSwapState(bookId, 'Accepted');
 
-    // Optionally: reject all other pending offers for this book
+    // Reject all other pending offers for this book
     final pendingOffers = offers
         .where(
           (o) => o.bookId == bookId && o.status == 'Pending' && o.id != offerId,
@@ -38,14 +38,38 @@ class OfferProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reject an offer: update offer status and set book available
+  /// Reject an offer: update offer status and set book available if no other pending offers
   Future<void> rejectOffer(String offerId, String bookId) async {
-    // Update the specific offer to Rejected
     await _fs.updateOfferStatus(offerId, 'Rejected');
 
-    // If no other pending offers, set book swapState to Available
     final otherPending = offers
         .where((o) => o.bookId == bookId && o.status == 'Pending')
+        .isNotEmpty;
+
+    if (!otherPending) {
+      await _fs.setBookSwapState(bookId, 'Available');
+    }
+
+    notifyListeners();
+  }
+
+  /// Delete a pending offer initiated by the user
+  Future<void> deleteOffer(String offerId) async {
+    // Find the offer before deleting
+    final index = offers.indexWhere((o) => o.id == offerId);
+    if (index == -1) return;
+    final offer = offers[index];
+
+    final bookId = offer.bookId;
+
+    // Delete the offer
+    await _fs.deleteOffer(offerId);
+
+    // If no other pending offers for the book, set swapState to Available
+    final otherPending = offers
+        .where(
+          (o) => o.bookId == bookId && o.status == 'Pending' && o.id != offerId,
+        )
         .isNotEmpty;
 
     if (!otherPending) {

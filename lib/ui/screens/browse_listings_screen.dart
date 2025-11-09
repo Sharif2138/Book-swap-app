@@ -45,7 +45,6 @@ class BrowseListingsScreen extends StatelessWidget {
           : RefreshIndicator(
               color: const Color.fromARGB(255, 214, 224, 31),
               onRefresh: () async {
-                // Force UI to refresh
                 bookProv.isLoading = true;
                 await Future.delayed(const Duration(seconds: 1));
                 bookProv.isLoading = false;
@@ -65,7 +64,6 @@ class BrowseListingsScreen extends StatelessWidget {
                   final book = books[i];
                   final isOwner = authProv.user?.uid == book.ownerId;
 
-                  // Check if this user has already requested this book
                   final hasPendingOffer = offerProv.offers.any(
                     (o) =>
                         o.bookId == book.id &&
@@ -161,15 +159,71 @@ class BookListingTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  book.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        book.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isOwner)
+                      PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddEditBookScreen(book: book),
+                              ),
+                            );
+                          } else if (value == 'delete') {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Confirm Delete'),
+                                content: const Text(
+                                  'Are you sure you want to delete this book?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              await Provider.of<BookProvider>(
+                                context,
+                                listen: false,
+                              ).deleteBook(book.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Book deleted successfully!'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        ],
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(

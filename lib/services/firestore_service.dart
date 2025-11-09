@@ -6,8 +6,7 @@ class FirestoreService {
   final booksCol = FirebaseFirestore.instance.collection('books');
   final offersCol = FirebaseFirestore.instance.collection('offers');
 
-  // 🔹 BOOKS
-
+  // Books
   Stream<List<Book>> booksStream() {
     return booksCol
         .orderBy('title')
@@ -16,18 +15,11 @@ class FirestoreService {
   }
 
   Future<void> addBook(Book b) => booksCol.add(b.toMap());
-
   Future<void> updateBook(Book b) => booksCol.doc(b.id).update(b.toMap());
-
   Future<void> deleteBook(String id) => booksCol.doc(id).delete();
 
-  Future<void> setBookSwapState(String bookId, String swapState) =>
-      booksCol.doc(bookId).update({'swapState': swapState});
-
-  // 🔹 OFFERS
-
+  // Offers
   Stream<List<Offer>> offersForUser(String uid) {
-    // offers where fromUserId==uid OR toUserId==uid
     return offersCol
         .where('participants', arrayContains: uid)
         .orderBy('createdAt', descending: true)
@@ -56,17 +48,23 @@ class FirestoreService {
   Future<void> updateOfferStatus(String offerId, String status) =>
       offersCol.doc(offerId).update({'status': status});
 
-  /// ✅ NEW: Prevent duplicate pending offers for the same user/book
+  Future<void> deleteOffer(String offerId) => offersCol.doc(offerId).delete();
+
+  // Update corresponding book swapState when offer status changes
+  Future<void> setBookSwapState(String bookId, String swapState) =>
+      booksCol.doc(bookId).update({'swapState': swapState});
+
+  /// Get pending offers for a book by a specific user
   Future<List<Offer>> getPendingOffersForBookByUser(
     String bookId,
-    String fromUserId,
+    String userId,
   ) async {
-    final query = await offersCol
+    final snapshot = await offersCol
         .where('bookId', isEqualTo: bookId)
-        .where('fromUserId', isEqualTo: fromUserId)
+        .where('fromUserId', isEqualTo: userId)
         .where('status', isEqualTo: 'Pending')
         .get();
 
-    return query.docs.map((d) => Offer.fromFirestore(d)).toList();
+    return snapshot.docs.map((d) => Offer.fromFirestore(d)).toList();
   }
 }

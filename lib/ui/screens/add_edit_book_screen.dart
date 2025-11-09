@@ -143,8 +143,47 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final bookProv = Provider.of<BookProvider>(context, listen: false);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Book?'),
+        content: const Text('Are you sure you want to delete this book?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _loading = true);
+      try {
+        await bookProv.deleteBook(widget.book!.id);
+        if (mounted) Navigator.of(context).pop();
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isOwner =
+        widget.book != null &&
+        Provider.of<AuthProvider>(context).user!.uid == widget.book!.ownerId;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.book == null ? 'Add Book' : 'Edit Book'),
@@ -152,6 +191,9 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
         toolbarHeight: 90,
         backgroundColor: const Color.fromARGB(255, 1, 6, 37),
         foregroundColor: Colors.white,
+        actions: isOwner && widget.book != null
+            ? [IconButton(icon: const Icon(Icons.delete), onPressed: _delete)]
+            : null,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -189,7 +231,7 @@ class _AddEditBookScreenState extends State<AddEditBookScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      initialValue: condition,
+                      value: condition,
                       decoration: InputDecoration(
                         labelText: 'Condition',
                         border: OutlineInputBorder(
