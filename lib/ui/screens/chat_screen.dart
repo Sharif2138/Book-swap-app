@@ -35,9 +35,7 @@ class ChatScreen extends StatelessWidget {
               ),
               child: Text(
                 msg['text']!,
-                style: TextStyle(
-                  color: isMe ? Colors.white : Colors.black,
-                ),
+                style: TextStyle(color: isMe ? Colors.white : Colors.black),
               ),
             ),
           );
@@ -68,10 +66,12 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.send, color:  Color.fromARGB(255, 1, 6, 37),
+                  icon: const Icon(
+                    Icons.send,
+                    color: Color.fromARGB(255, 1, 6, 37),
                   ),
                   onPressed: () {
-                    // TODO: Add send message logic later
+                
                   },
                 ),
               ],

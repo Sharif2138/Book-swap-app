@@ -1,5 +1,7 @@
+import 'package:book_swap_app/ui/screens/auth/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:book_swap_app/ui/widgets/book_icon.dart';
+import 'login_screen.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -74,7 +76,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(context, '/login');
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
                     },
                   ),
                 ),
@@ -101,7 +103,12 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.pushNamed(context, '/signup');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SignupScreen(),  
+                        ),
+                      );
                     },
                   ),
                 ),

@@ -41,46 +41,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDMaesAwbkdiQnbuJR2Oaxm-hjdThyUBz8',
-    appId: '1:731412522113:web:2a495228a2f611fed11980',
-    messagingSenderId: '731412522113',
-    projectId: 'book-swap-app-1673e',
-    authDomain: 'book-swap-app-1673e.firebaseapp.com',
-    storageBucket: 'book-swap-app-1673e.firebasestorage.app',
+    apiKey: 'AIzaSyDfVD_ZpAveFx2DzBGplmfa9VetDa86kz8',
+    appId: '1:594646811375:web:898053ef9cd89096ea511a',
+    messagingSenderId: '594646811375',
+    projectId: 'book-swap-app2',
+    authDomain: 'book-swap-app2.firebaseapp.com',
+    storageBucket: 'book-swap-app2.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBP7yNbhX68gM8t78sCj6c7o-PfUlt0fJw',
-    appId: '1:731412522113:android:c8dc0b7aeb39b621d11980',
-    messagingSenderId: '731412522113',
-    projectId: 'book-swap-app-1673e',
-    storageBucket: 'book-swap-app-1673e.firebasestorage.app',
+    apiKey: 'AIzaSyAL2rTo3JK1OXeoAMDYRTit7TlnHIZfjVE',
+    appId: '1:594646811375:android:7d31d5f3159dc686ea511a',
+    messagingSenderId: '594646811375',
+    projectId: 'book-swap-app2',
+    storageBucket: 'book-swap-app2.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDCSpuWu_OO12MIT8h8W4PvIBxhO36Du7Q',
-    appId: '1:731412522113:ios:cccbd5e46aa1c9bcd11980',
-    messagingSenderId: '731412522113',
-    projectId: 'book-swap-app-1673e',
-    storageBucket: 'book-swap-app-1673e.firebasestorage.app',
+    apiKey: 'AIzaSyCC5z0Xi58bfsgWuKy-3kt-OupiS_XpV7g',
+    appId: '1:594646811375:ios:8936357363f2da62ea511a',
+    messagingSenderId: '594646811375',
+    projectId: 'book-swap-app2',
+    storageBucket: 'book-swap-app2.firebasestorage.app',
     iosBundleId: 'com.example.bookSwapApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDCSpuWu_OO12MIT8h8W4PvIBxhO36Du7Q',
-    appId: '1:731412522113:ios:cccbd5e46aa1c9bcd11980',
-    messagingSenderId: '731412522113',
-    projectId: 'book-swap-app-1673e',
-    storageBucket: 'book-swap-app-1673e.firebasestorage.app',
+    apiKey: 'AIzaSyCC5z0Xi58bfsgWuKy-3kt-OupiS_XpV7g',
+    appId: '1:594646811375:ios:8936357363f2da62ea511a',
+    messagingSenderId: '594646811375',
+    projectId: 'book-swap-app2',
+    storageBucket: 'book-swap-app2.firebasestorage.app',
     iosBundleId: 'com.example.bookSwapApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDMaesAwbkdiQnbuJR2Oaxm-hjdThyUBz8',
-    appId: '1:731412522113:web:fac1344efa7a1490d11980',
-    messagingSenderId: '731412522113',
-    projectId: 'book-swap-app-1673e',
-    authDomain: 'book-swap-app-1673e.firebaseapp.com',
-    storageBucket: 'book-swap-app-1673e.firebasestorage.app',
+    apiKey: 'AIzaSyDfVD_ZpAveFx2DzBGplmfa9VetDa86kz8',
+    appId: '1:594646811375:web:dbd2026c84bbbb96ea511a',
+    messagingSenderId: '594646811375',
+    projectId: 'book-swap-app2',
+    authDomain: 'book-swap-app2.firebaseapp.com',
+    storageBucket: 'book-swap-app2.firebasestorage.app',
   );
+
 }
