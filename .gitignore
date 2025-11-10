@@ -1,4 +1,10 @@
-# Miscellaneous
+# =========================================================
+# 🔥 Flutter + Firebase Optimized .gitignore
+# =========================================================
+
+# ----------------------------
+# 🧩 General / Miscellaneous
+# ----------------------------
 *.class
 *.log
 *.pyc
@@ -12,34 +18,89 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# ----------------------------
+# 💡 IntelliJ / Android Studio
+# ----------------------------
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# ----------------------------
+# 💻 VS Code (optional)
+# Uncomment if you don’t want local VSCode settings in Git
+# ----------------------------
 #.vscode/
 
-# Flutter/Dart/Pub related
+# ----------------------------
+# 🐦 Flutter / Dart / Pub
+# ----------------------------
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
 /coverage/
+.melos_tool/
 
-# Symbolication related
-app.*.symbols
+# ----------------------------
+# 🔥 Firebase Config Files
+# These contain project-specific credentials.
+# Never commit them publicly.
+# ----------------------------
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+web/firebase-messaging-sw.js
 
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# ----------------------------
+# 🤖 Android / Gradle
+# ----------------------------
+.gradle/
+**/gradle-wrapper.jar
+/local.properties
 /android/app/debug
 /android/app/profile
 /android/app/release
+/captures/
+*.jks
+*.keystore
+
+# ----------------------------
+# 🍏 iOS / macOS
+# ----------------------------
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/App.framework
+ios/Flutter/Generated.xcconfig
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+DerivedData/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdatad/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+
+# ----------------------------
+# 🧩 Symbolication / Obfuscation
+# ----------------------------
+app.*.symbols
+app.*.map.json
+
+# ----------------------------
+# 🧪 Misc Build Artifacts
+# ----------------------------
+*.lock
+*.tmp
+*.bak
+*.orig
