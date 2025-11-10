@@ -33,10 +33,10 @@ Follow these steps to run BookSwap on your machine:
 git clone https://github.com/your-username/bookswap.git
 cd bookswap
 
-2. Install dependencies
+### 2. Install dependencies
 flutter pub get
 
-3. Set up Firebase
+### 3. Set up Firebase
 
 Go to Firebase Console
  and create a new project.

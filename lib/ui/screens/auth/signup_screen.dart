@@ -112,7 +112,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Verification email sent!'),
+                            content: Text('Verification email sent, check in your spam folder.'),
                           ),
                         );
                       } catch (e) {
